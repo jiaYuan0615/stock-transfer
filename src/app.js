@@ -1,3 +1,4 @@
+/* eslint-disable no-new */
 /* eslint-disable no-console */
 import express from 'express';
 import http from 'http';
@@ -13,6 +14,8 @@ import swaggerUi from 'swagger-ui-express';
 import _ from 'lodash';
 import helmet from 'helmet';
 import nocache from 'nocache';
+import { CronJob } from 'cron';
+import moment from 'moment';
 import index from './routes';
 import env from './config/env';
 
@@ -82,7 +85,22 @@ app.use('/api', index);
 const server = http.createServer(app);
 server.listen(env.Port);
 
+// 每日早上 9 點執行
+new CronJob('0 0 9 * * *', async () => {
+  console.log('自動執行排程，確認是否已將今日需要轉換的內容進行轉置 ....');
+  // execute transfer api
+}, null, true);
+
 server.on('listening', () => {
   const addr = server.address();
   console.log(`This server is on ${addr.port} ...`);
+
+  console.log('啟動程式自動檢查，確認是否已將今日需要轉換的內容進行轉置 ....');
+  const today = moment().format('yyyy-MM-dd');
+  const target = path.resolve(__dirname, `./storage/transfer/${today}.csv`);
+  if (target) {
+    console.log('今日需要轉換的內容尚未完成，正在執行程式 ....');
+  } else {
+    console.log('今日需要轉換的內容已完成');
+  }
 });
